@@ -170,10 +170,10 @@ class Apilot(Plugin):
                     f"星座：{luckyconstellation}\n\n"
                     f"✍【简评】\n{short_comment}\n\n"
                     f"📜【详细运势】\n"
-                    f"总运：{fortune_all}\n"
-                    f"爱情：{fortune_love}\n"
-                    f"工作：{fortune_work}\n"
-                    f"财运：{fortune_money}\n"
+                    f"总运：{fortune_all}\n\n"
+                    f"爱情：{fortune_love}\n\n"
+                    f"工作：{fortune_work}\n\n"
+                    f"财运：{fortune_money}\n\n"
                     f"健康：{fortune_health}\n"
                 )
 
