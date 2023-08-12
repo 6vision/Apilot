@@ -10,7 +10,7 @@
 
 安装成功后，根据提示使用`#scanp`命令来扫描新插件，再使用`#enablep Apilot`开启插件，参考下图
 
-![image-20230812110312118](C:/Users/vision/AppData/Roaming/Typora/typora-user-images/image-20230812110312118.png)
+![image-20230812110312118](https://cdn.jsdelivr.net/gh/6vision/PicBED@latest/images/2023/08/12/539fddb2344205e137fd5933b1f5f20f-image-20230812111523205-02596d.png))
 
 ### 使用
 
