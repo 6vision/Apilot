@@ -197,7 +197,8 @@ class Apilot(Plugin):
             if data["success"]:
                 output = []
                 topics = data['data']
-                for i, topic in enumerate(topics[:20], 1):
+                output.append(f'更新时间：{data["time"]}\n')
+                for i, topic in enumerate(topics[:15], 1):
                     formatted_str = f"{i}. {topic['title']} ({topic['hot']} 浏览)\nURL: {topic['url']}\n"
                     output.append(formatted_str)
                 return "\n".join(output)
