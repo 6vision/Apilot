@@ -61,6 +61,13 @@ class Apilot(Plugin):
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
 
+        if content == "微博热搜":
+            reply = Reply()
+            reply.type = ReplyType.TEXT
+            reply.content = self.get_weibo_hot_trends()
+            e_context["reply"] = reply
+            e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
+
         match = re.match(r'^([\u4e00-\u9fa5]{2}座)$', content)
         if match:
             reply = Reply()
@@ -110,11 +117,6 @@ class Apilot(Plugin):
         except Exception as e:
             logger.error(f"获取moyu_calendar信息失败，错误信息：{e}")
             return None
-
-
-
-
-
 
     def get_horoscope(self, astro_sign: str, time_period: str = "today"):
         base_url = "https://api.vvhan.com/api/horoscope"
@@ -186,6 +188,24 @@ class Apilot(Plugin):
         except Exception as e:
             logger.error(f"Error fetching horoscope: {e}")
             return "Error occurred while fetching horoscope."
-
+                
+    def get_weibo_hot_trends(self):
+        url = "https://api.vvhan.com/api/wbhot"
+        try:
+            response = requests.get(url)
+            data = response.json()
+            if data["success"]:
+                output = []
+                topics = data['data']
+                for i, topic in enumerate(topics[:20], 1):
+                    formatted_str = f"{i}. {topic['title']} ({topic['hot']} 浏览)\nURL: {topic['url']}\n"
+                    output.append(formatted_str)
+                return "\n".join(output)
+            else:
+                logger.error(f"get_weibo_hot_trends，错误信息：{response}")
+                return None
+        except Exception as e:
+            logger.error(f"get_weibo_hot_trends，错误信息：{e}")
+            return "Error occurred while getting weibo_hot_trends."
 
 
