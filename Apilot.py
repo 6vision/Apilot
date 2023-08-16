@@ -28,7 +28,7 @@ ZODIAC_MAPPING = {
 @plugins.register(
     name="Apilot",
     desire_priority=-1,
-    hidden=True,
+    hidden=False,
     desc="A plugin to handle specific keywords",
     version="0.1",
     author="vision",
@@ -79,7 +79,7 @@ class Apilot(Plugin):
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
     def get_help_text(self, **kwargs):
-        help_text = "发送早报、摸鱼、星座名称，会有惊喜！"
+        help_text = "发送早报、摸鱼、微博热搜、你的星座名称，会有惊喜！"
         return help_text
 
     def get_morning_news(self):
