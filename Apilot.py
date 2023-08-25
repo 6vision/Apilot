@@ -219,7 +219,7 @@ class Apilot(Plugin):
             ]
             for info in data.get("info"):
                 time_str = info.get('time')[5:-3]
-                formatted_result.append(f"{time_str} - {info.get('status_desc')}\n  {info.get('content')}")
+                formatted_result.append(f"{time_str} - {info.get('status_desc')}\n    {info.get('content')}")
 
             return "\n".join(formatted_result)
 
