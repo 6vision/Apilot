@@ -23,5 +23,6 @@
 <img src="https://cdn.jsdelivr.net/gh/6vision/PicBED@latest/images/2023/08/12/534b9bc440c8ecf66d059dda793d2c72-image-20230812110609065-91a85e.png" alt="image-20230812110609065" style="zoom:50%;" />
 
 快递查询格式：快递+快递编号。如：快递YT2505082504474，如下图!
-[image](https://github.com/6vision/Apilot/assets/38057450/2d2be057-b665-49c7-90ae-931703eab9e6)
+<img src="https://cdn.jsdelivr.net/gh/6vision/PicBED@latest/images/2023/08/25/f8e7c4af26945c41b2e90e14aa2928f6-image-20230825210757913-7673a1.png" alt="image-20230825210757913" style="zoom:50%;" />
+
 
