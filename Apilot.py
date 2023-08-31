@@ -259,7 +259,7 @@ class Apilot(Plugin):
                 # Basic Info
                 formatted_output = []
                 basic_info = (
-                    f"🏙️ {data['city']} ({data['province']})\n"
+                    f"🏙️ 城市: {data['city']} ({data['province']})\n"
                     f"🕒 更新: {formatted_update_time}\n"
                     f"🌦️ 天气: {data['weather']}\n"
                     f"🌡️ 温度: ↓ {data['min_temp']}℃| 现 {data['temp']}℃| ↑ {data['max_temp']}℃\n"
