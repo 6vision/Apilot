@@ -289,7 +289,7 @@ class Apilot(Plugin):
                     next_hour = (update_hour + future_hour) % 24
 
                     if update_hour < next_hour <= (update_hour + 6):
-                        future_weather.append(f"{next_hour:02d}:00 - {hour_data['wea']} - {hour_data['temp']}°C")
+                        future_weather.append(f"    {next_hour:02d}:00 - {hour_data['wea']} - {hour_data['temp']}°C")
 
                 future_weather_info = "⏳ 未来七小时的天气预报:\n" + "\n".join(future_weather)
                 formatted_output.append(future_weather_info)
