@@ -262,7 +262,7 @@ class Apilot(Plugin):
                     f"🏙️ 城市: {data['city']} ({data['province']})\n"
                     f"🕒 更新: {formatted_update_time}\n"
                     f"🌦️ 天气: {data['weather']}\n"
-                    f"🌡️ 温度: ↓ {data['min_temp']}℃| 现 {data['temp']}℃| ↑ {data['max_temp']}℃\n"
+                    f"🌡️ 温度: ↓{data['min_temp']}℃| 现{data['temp']}℃| ↑{data['max_temp']}℃\n"
                     f"🌬️ 风向: {data['wind']}\n"
                     f"💦 湿度: {data['humidity']}\n"
                     f"🌅 日出/日落: {data['sunrise']} / {data['sunset']}\n"
