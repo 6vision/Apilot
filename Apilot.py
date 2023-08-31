@@ -9,7 +9,7 @@ from channel import channel
 from common.log import logger
 from plugins import *
 from PIL import Image
-from datetime import datetime
+from datetime import datetime, timedelta
 BASE_URL_VVHAN = "https://api.vvhan.com/api/"
 BASE_URL_ALAPI = "https://v2.alapi.cn/api/"
 
@@ -109,7 +109,7 @@ class Apilot(Plugin):
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
 
     def get_help_text(self, **kwargs):
-        help_text = "🐳发送“早报”/“摸鱼”/“微博热搜”/“星座名称”会有惊喜！\n📦快递查询：<快递+快递单号>\n🌦️天气查询：城市+天气"
+        help_text = "\n🐳发送“早报”、“摸鱼”、“微博热搜”、“星座名称”会有惊喜！\n📦快递查询：<快递+快递单号>\n🌦️天气查询：城市+天气"
         return help_text
 
 
@@ -259,10 +259,10 @@ class Apilot(Plugin):
                 # Basic Info
                 formatted_output = []
                 basic_info = (
-                    f"🏙️ 城市: {data['city']} ({data['province']})\n"
+                    f"🏙️ {data['city']} ({data['province']})\n"
                     f"🕒 更新: {formatted_update_time}\n"
                     f"🌦️ 天气: {data['weather']}\n"
-                    f"🌡️ 温度: ↓{data['min_temp']}℃| 现{data['temp']}℃| ↑{data['max_temp']}℃\n"
+                    f"🌡️ 温度: ↓ {data['min_temp']}℃| 现 {data['temp']}℃| ↑ {data['max_temp']}℃\n"
                     f"🌬️ 风向: {data['wind']}\n"
                     f"💦 湿度: {data['humidity']}\n"
                     f"🌅 日出/日落: {data['sunrise']} / {data['sunset']}\n"
@@ -282,18 +282,17 @@ class Apilot(Plugin):
                 chuangyi_info = f"👚 穿衣指数: {chuangyi_level} - {chuangyi_content}\n"
                 formatted_output.append(chuangyi_info)
                 # Next 7 hours weather
-                update_time = data['update_time']
-                update_hour = int(update_time.split(' ')[1].split(':')[0])
+                ten_hours_later = dt_object + timedelta(hours=10)
 
                 future_weather = []
                 for hour_data in data['hour']:
-                    future_hour = int(hour_data['time'].split(' ')[1].split(':')[0])
-                    next_hour = (update_hour + future_hour) % 24
+                    forecast_time_str = hour_data['time']
+                    forecast_time = datetime.strptime(forecast_time_str, "%Y-%m-%d %H:%M:%S")
 
-                    if update_hour < next_hour <= (update_hour + 6):
-                        future_weather.append(f"     {next_hour:02d}:00 - {hour_data['wea']} - {hour_data['temp']}°C")
+                    if dt_object < forecast_time <= ten_hours_later:
+                        future_weather.append(f"     {forecast_time.hour:02d}:00 - {hour_data['wea']} - {hour_data['temp']}°C")
 
-                future_weather_info = "⏳ 未来七小时的天气预报:\n" + "\n".join(future_weather)
+                future_weather_info = "⏳ 未来10小时的天气预报:\n" + "\n".join(future_weather)
                 formatted_output.append(future_weather_info)
 
                 # Alarm Info
