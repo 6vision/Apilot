@@ -92,8 +92,24 @@ class Apilot(Plugin):
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
 
+        # 天气查询
+        weather_match = re.search(r'([\u4e00-\u9fa5]{1,6})的?天气$', content)
+        if weather_match:
+            # 如果匹配成功，提取第一个捕获组（可能包含“的”的城市名）
+            city_with_optional_de = weather_match.group(1)
+            # 移除可能存在的“的”
+            city = city_with_optional_de.replace('的', '')
+            if not self.alapi_token:
+                self.handle_error("alapi_token not configured", "天气请求失败")
+                reply = self.create_reply(ReplyType.TEXT, "请先配置alapi的token")
+            else:
+                content = self.get_weather(self.alapi_token, city)
+                reply = self.create_reply(ReplyType.TEXT, content)
+            e_context["reply"] = reply
+            e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
+
     def get_help_text(self, **kwargs):
-        help_text = "🐳发送早报、摸鱼、微博热搜、星座名称会有惊喜！\n📦快递查询请发送<快递+快递单号>"
+        help_text = "\n🐳发送“早报”、“摸鱼”、“微博热搜”、“星座名称”会有惊喜！\n📦快递查询：<快递+快递单号>\n🌦️天气查询：城市+天气"
         return help_text
 
 
@@ -226,7 +242,77 @@ class Apilot(Plugin):
         except Exception as e:
             return self.handle_error(e, "快递查询失败")
 
+    def get_weather(self, alapi_token, city: str):
+        url = BASE_URL_ALAPI + 'tianqi'
+        params = {
+            'city': city,
+            'token': f'{alapi_token}'  # 请将你的token填在这里
+        }
+        try:
+            weather_data = self.make_request(url, "GET", params=params)
+            print(weather_data)
+            if isinstance(weather_data, dict) and weather_data.get('code') == 200:
+                data = weather_data['data']
 
+                # Basic Info
+                formatted_output = []
+                basic_info = (
+                    f"🏙️ {data['city']} ({data['province']})\n"
+                    f"🕒 更新时间: {data['update_time']}\n"
+                    f"🌦️ 天气: {data['weather']}\n"
+                    f"🌡️ 温度: 最低 {data['min_temp']}°C | 当前 {data['temp']}°C | 最高 {data['max_temp']}°C \n"
+                    f"🌬️ 风向: {data['wind']}\n"
+                    f"💦 湿度: {data['humidity']}\n"
+                    f"🌅 日出/日落: {data['sunrise']} / {data['sunset']}\n"
+                )
+                formatted_output.append(basic_info)
+
+
+                # Clothing Index,处理部分县区穿衣指数返回null
+                chuangyi_data = data.get('index', {}).get('chuangyi', {})
+                if chuangyi_data:
+                    chuangyi_level = chuangyi_data.get('level', '未知')
+                    chuangyi_content = chuangyi_data.get('content', '未知')
+                else:
+                    chuangyi_level = '未知'
+                    chuangyi_content = '未知'
+
+                chuangyi_info = f"👚 穿衣指数: {chuangyi_level} - {chuangyi_content}\n"
+                formatted_output.append(chuangyi_info)
+                # Next 7 hours weather
+                update_time = data['update_time']
+                update_hour = int(update_time.split(' ')[1].split(':')[0])
+
+                future_weather = []
+                for hour_data in data['hour']:
+                    future_hour = int(hour_data['time'].split(' ')[1].split(':')[0])
+                    next_hour = (update_hour + future_hour) % 24
+
+                    if update_hour < next_hour <= (update_hour + 6):
+                        future_weather.append(f"{next_hour:02d}:00 - {hour_data['wea']} - {hour_data['temp']}°C")
+
+                future_weather_info = "⏳ 未来七小时的天气预报:\n" + "\n".join(future_weather)
+                formatted_output.append(future_weather_info)
+
+                # Alarm Info
+                if data.get('alarm'):
+                    alarm_info = "⚠️ 预警信息:\n"
+                    for alarm in data['alarm']:
+                        alarm_info += (
+                            f"🔴 标题: {alarm['title']}\n"
+                            f"🟠 等级: {alarm['level']}\n"
+                            f"🟡 类型: {alarm['type']}\n"
+                            f"🟢 提示: \n{alarm['tips']}\n"
+                            f"🔵 内容: \n{alarm['content']}\n\n"
+                        )
+                    formatted_output.append(alarm_info)
+
+                return "\n".join(formatted_output)
+            else:
+                return self.handle_error("weather_data", "获取失败，请查看服务器log")
+
+        except Exception as e:
+            return self.handle_error(e, "获取天气信息失败")
 
     def make_request(self, url, method="GET", headers=None, params=None, data=None, json_data=None):
         try:
