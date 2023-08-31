@@ -9,7 +9,7 @@ from channel import channel
 from common.log import logger
 from plugins import *
 from PIL import Image
-
+from datetime import datetime
 BASE_URL_VVHAN = "https://api.vvhan.com/api/"
 BASE_URL_ALAPI = "https://v2.alapi.cn/api/"
 
@@ -253,14 +253,16 @@ class Apilot(Plugin):
             print(weather_data)
             if isinstance(weather_data, dict) and weather_data.get('code') == 200:
                 data = weather_data['data']
-
+                update_time = data['update_time']
+                dt_object = datetime.strptime(update_time, "%Y-%m-%d %H:%M:%S")
+                formatted_update_time = dt_object.strftime("%m-%d %H:%M")
                 # Basic Info
                 formatted_output = []
                 basic_info = (
                     f"🏙️ {data['city']} ({data['province']})\n"
-                    f"🕒 更新时间: {data['update_time']}\n"
+                    f"🕒 更新: {formatted_update_time}\n"
                     f"🌦️ 天气: {data['weather']}\n"
-                    f"🌡️ 温度: 最低 {data['min_temp']}°C | 当前 {data['temp']}°C | 最高 {data['max_temp']}°C \n"
+                    f"🌡️ 温度: ↓ {data['min_temp']}℃| 现 {data['temp']}℃| ↑ {data['max_temp']}℃\n"
                     f"🌬️ 风向: {data['wind']}\n"
                     f"💦 湿度: {data['humidity']}\n"
                     f"🌅 日出/日落: {data['sunrise']} / {data['sunset']}\n"
@@ -289,7 +291,7 @@ class Apilot(Plugin):
                     next_hour = (update_hour + future_hour) % 24
 
                     if update_hour < next_hour <= (update_hour + 6):
-                        future_weather.append(f"    {next_hour:02d}:00 - {hour_data['wea']} - {hour_data['temp']}°C")
+                        future_weather.append(f"     {next_hour:02d}:00 - {hour_data['wea']} - {hour_data['temp']}°C")
 
                 future_weather_info = "⏳ 未来七小时的天气预报:\n" + "\n".join(future_weather)
                 formatted_output.append(future_weather_info)
