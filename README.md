@@ -2,7 +2,7 @@
 
 ### 安装
 
-使用管理员口令在线安装即可，参考这里如何[认证管理员](https://www.wangpc.cc/aigc/chatgpt-on-wechat_plugin/)！
+使用管理员口令在线安装即可，参考这里去如何[认证管理员](https://www.wangpc.cc/aigc/chatgpt-on-wechat_plugin/)！
 
 ```
 #installp https://github.com/6vision/Apilot.git
@@ -26,5 +26,4 @@
 快递查询格式：快递+快递编号。如：快递YT2505082504474，如下图!
 
 <img src="https://cdn.jsdelivr.net/gh/6vision/PicBED@latest/images/2023/08/25/f8e7c4af26945c41b2e90e14aa2928f6-image-20230825210757913-7673a1.png" alt="image-20230825210757913" style="zoom:50%;" />
-
 
