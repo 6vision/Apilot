@@ -14,6 +14,7 @@
 
 ### 配置
 直接安装不配置也可以使用一部分接口，部分接口(快递、天气)需要配置alapi的token。
+
 复制插件目录的`config.json.template`文件并重命名为`config.json`，在`alapi_token`字段填入申请的token，token申请点击这里[alapi](https://admin.alapi.cn/account/center)
 
 ### 使用
