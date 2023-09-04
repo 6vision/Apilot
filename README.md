@@ -10,7 +10,7 @@
 
 安装成功后，根据提示使用`#scanp`命令来扫描新插件，再使用`#enablep Apilot`开启插件，参考下图
 
-![安装示意](img/安装.png)
+<img src="img/安装.png" width="200" >
 
 ### 配置
 直接安装不配置也可以使用一部分接口，部分接口需要配置alapi的token。
