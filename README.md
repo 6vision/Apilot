@@ -2,7 +2,7 @@
 
 ### 安装
 
-使用管理员口令在线安装即可，参考这里如何[认证管理员](https://www.wangpc.cc/aigc/chatgpt-on-wechat_plugin/)！
+使用管理员口令在线安装即可，参考这里去如何[认证管理员](https://www.wangpc.cc/aigc/chatgpt-on-wechat_plugin/)！
 
 ```
 #installp https://github.com/6vision/Apilot.git
@@ -42,6 +42,5 @@
 
 * 天气查询格式：城市+天气。如：成都天气。（支持3400+城市天气，输入不正确或者查询失败返回北京天气）
 
-  
-
 <img src="img/天气.png" width="600" >
+
