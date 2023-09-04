@@ -13,17 +13,34 @@
 <img src="img/安装.png" width="200" >
 
 ### 配置
-直接安装不配置也可以使用一部分接口，部分接口需要配置alapi的token。
-复制插件目录的config.json.template文件并重命名为config.json，在alapi_token字段填入申请的token，token申请点击这里[alapi](https://admin.alapi.cn/account/center)
+直接安装不配置也可以使用一部分接口，部分接口(快递、天气)需要配置alapi的token。
+复制插件目录的`config.json.template`文件并重命名为`config.json`，在`alapi_token`字段填入申请的token，token申请点击这里[alapi](https://admin.alapi.cn/account/center)
 
 ### 使用
-对话框发送“早报”、“摸鱼”、"微博热搜"、”任意星座名称”可以直接返回对应的内容！
+* 对话框发送“早报”、“摸鱼”、"微博热搜"、”任意星座名称”可以直接返回对应的内容！
 
-<img src="https://cdn.jsdelivr.net/gh/6vision/PicBED@latest/images/2023/08/12/227e04d5f08800ef62ea2eb080dfa751-image-20230812110548378-6198d9.png" alt="image-20230812110548378" style="zoom:50%;" />
+  
 
-<img src="https://cdn.jsdelivr.net/gh/6vision/PicBED@latest/images/2023/08/12/534b9bc440c8ecf66d059dda793d2c72-image-20230812110609065-91a85e.png" alt="image-20230812110609065" style="zoom:50%;" />
+<img src="img/早报.png" width="600" >
 
-快递查询格式：快递+快递编号。如：快递YT2505082504474，如下图!
+<img src="img/摸鱼.png" width="600" >
 
-<img src="https://cdn.jsdelivr.net/gh/6vision/PicBED@latest/images/2023/08/25/f8e7c4af26945c41b2e90e14aa2928f6-image-20230825210757913-7673a1.png" alt="image-20230825210757913" style="zoom:50%;" />
+<img src="img/星座.png" width="600" >
 
+<img src="img/微博热搜.png" width="600" >
+
+
+
+* 快递查询格式：快递+快递编号。如：快递YT2505082504474，如下图!
+
+  
+
+<img src="img/快递.png" width="600" >
+
+
+
+* 天气查询格式：城市+天气。如：成都天气。（支持3400+城市天气，输入不正确或者查询失败返回北京天气）
+
+  
+
+<img src="img/天气.png" width="600" >
