@@ -24,20 +24,17 @@ BASE_URL_ALAPI = "https://v2.alapi.cn/api/"
 class Apilot(Plugin):
     def __init__(self):
         super().__init__()
-        self.alapi_token = None  # Setting a default value for alapi_token
-        self.load_config_optional()  # Try to load the config in an optional manner
-        self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
-
-    def load_config_optional(self):
         try:
-            conf = super().load_config()
-            if conf and "alapi_token" in conf:
-                self.alapi_token = conf["alapi_token"]
-                logger.info("[Apilot] inited and alapi_token loaded successfully")
-            else:
+            self.conf = super().load_config()
+            if not self.conf:
                 logger.warn("[Apilot] inited but alapi_token not found in config")
+                self.alapi_token = None # Setting a default value for alapi_token
+            else:
+                logger.info("[Apilot] inited and alapi_token loaded successfully")
+                self.alapi_token = self.conf["alapi_token"]
+            self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
         except Exception as e:
-            logger.warn(f"[Apilot] Error loading config: {e}")
+            raise self.handle_error(e, "[Apiot] init failed, ignore ")
 
     def on_handle_context(self, e_context: EventContext):
         if e_context["context"].type not in [
