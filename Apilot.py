@@ -8,7 +8,6 @@ from bridge.reply import Reply, ReplyType
 from channel import channel
 from common.log import logger
 from plugins import *
-from PIL import Image
 from datetime import datetime, timedelta
 BASE_URL_VVHAN = "https://api.vvhan.com/api/"
 BASE_URL_ALAPI = "https://v2.alapi.cn/api/"
