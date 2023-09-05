@@ -247,7 +247,6 @@ class Apilot(Plugin):
         }
         try:
             weather_data = self.make_request(url, "GET", params=params)
-            print(weather_data)
             if isinstance(weather_data, dict) and weather_data.get('code') == 200:
                 data = weather_data['data']
                 update_time = data['update_time']
