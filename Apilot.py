@@ -25,7 +25,7 @@ class Apilot(Plugin):
         super().__init__()
         try:
             self.conf = super().load_config()
-            self.condition_2_and_3_cities = None  # Initially set to None
+            self.condition_2_and_3_cities = None  # 天气查询，存储重复城市信息，Initially set to None
             if not self.conf:
                 logger.warn("[Apilot] inited but alapi_token not found in config")
                 self.alapi_token = None # Setting a default value for alapi_token
@@ -116,8 +116,26 @@ class Apilot(Plugin):
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
 
-    def get_help_text(self, **kwargs):
-        help_text = "\n🐳发送“早报”、“摸鱼”、“微博热搜”、“星座名称”会有惊喜！\n📦快递查询：<快递+快递单号>\n🌦️天气查询：城市+天气"
+    def get_help_text(self, verbose=False, **kwargs):
+        short_help_text = " 发送特定指令以获取早报、查询天气、星座运势、快递信息等！"
+
+        if not verbose:
+            return short_help_text
+
+        help_text = "📚 主要功能：\n"
+
+        # 娱乐和信息类
+        help_text += "\n🎉 娱乐与资讯：\n"
+        help_text += "  🌅 早报: 发送“早报”获取早报。\n"
+        help_text += "  🐟 摸鱼: 发送“摸鱼”获取摸鱼人日历。\n"
+        help_text += "  🔥 热榜: 发送“xx热榜”查看支持的热榜。\n"
+
+        # 查询类
+        help_text += "\n🔍 查询工具：\n"
+        help_text += "  🌦️ 天气: 发送“城市+天气”查天气，如“北京天气”。\n"
+        help_text += "  📦 快递: 发送“快递+单号”查询快递状态。如“快递112345655”\n"
+        help_text += "  🌌 星座: 发送星座名称查看今日运势，如“白羊座”。\n"
+
         return help_text
 
 
@@ -224,7 +242,12 @@ class Apilot(Plugin):
                 return self.handle_error(e, "获取热榜失败")
         else:
             supported_types = "/".join(hot_trend_types.keys())
-            return f"未知的热榜类型，已支持<{supported_types}>\n请发送<类型+热榜>,如：微博热榜"
+            final_output = (
+                f"⚠️未知的热榜类型 ⚠️\n"
+                f"👉 已支持的类型有：\n  {supported_types}\n"
+                f"📝 请按照以下格式发送：\n  类型+热榜  例如：微博热榜"
+            )
+            return final_output
 
     def query_express_info(self, alapi_token, tracking_number, com="", order="asc"):
         url = BASE_URL_ALAPI + "kd"
@@ -266,9 +289,11 @@ class Apilot(Plugin):
             city_info = self.check_multiple_city_ids(city_or_id)
             if city_info:
                 data = city_info['data']
-                multiple_city_info = "\n".join(
-                    [f"{entry['province']} {entry['leader']}:{entry['city_id']}" for entry in data])
-                return f"查询 {city_or_id} 具有多条数据：\n{multiple_city_info}\n请使用id查询，发送“id天气”"
+                formatted_city_info = "\n".join(
+                    [f"{idx + 1}) {entry['province']}--{entry['leader']}, ID: {entry['city_id']}"
+                     for idx, entry in enumerate(data)]
+                )
+                return f"查询 <{city_or_id}> 具有多条数据：\n{formatted_city_info}\n请使用id查询，发送“id天气”"
 
             params = {
                 'city': city_or_id,
@@ -374,7 +399,7 @@ class Apilot(Plugin):
     def load_city_conditions(self):
         if self.condition_2_and_3_cities is None:
             try:
-                json_file_path = os.path.join(os.path.dirname(__file__), 'condition_2_and_3_cities.json')
+                json_file_path = os.path.join(os.path.dirname(__file__), 'duplicate-citys.json')
                 with open(json_file_path, 'r', encoding='utf-8') as f:
                     self.condition_2_and_3_cities = json.load(f)
             except Exception as e:
