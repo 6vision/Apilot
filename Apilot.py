@@ -25,6 +25,7 @@ class Apilot(Plugin):
         super().__init__()
         try:
             self.conf = super().load_config()
+            self.condition_2_and_3_cities = None  # 天气查询，存储重复城市信息，Initially set to None
             if not self.conf:
                 logger.warn("[Apilot] inited but alapi_token not found in config")
                 self.alapi_token = None # Setting a default value for alapi_token
@@ -40,7 +41,7 @@ class Apilot(Plugin):
             ContextType.TEXT
         ]:
             return
-        content = e_context["context"].content
+        content = e_context["context"].content.strip()
         logger.debug("[Apilot] on_handle_context. content: %s" % content)
 
         if content == "早报":
@@ -60,19 +61,29 @@ class Apilot(Plugin):
             # Extract the part after "快递"
             tracking_number = content[2:].strip()
 
+            tracking_number = tracking_number.replace('：', ':')  # 替换可能出现的中文符号
             # Check if alapi_token is available before calling the function
             if not self.alapi_token:
                 self.handle_error("alapi_token not configured", "快递请求失败")
                 reply = self.create_reply(ReplyType.TEXT, "请先配置alapi的token")
             else:
+                # Check if the tracking_number starts with "SF" for Shunfeng (顺丰) Express
+                if tracking_number.startswith("SF"):
+                    # Check if the user has included the last four digits of the phone number
+                    if ':' not in tracking_number:
+                        reply = self.create_reply(ReplyType.TEXT, "顺丰快递需要补充寄/收件人手机号后四位，格式：SF12345:0000")
+                        e_context["reply"] = reply
+                        e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
+                        return  # End the function here
+
                 # Call query_express_info function with the extracted tracking_number and the alapi_token from config
                 content = self.query_express_info(self.alapi_token, tracking_number)
                 reply = self.create_reply(ReplyType.TEXT, content)
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
 
-        match = re.match(r'^([\u4e00-\u9fa5]{2}座)$', content)
-        if match:
+        horoscope_match = re.match(r'^([\u4e00-\u9fa5]{2}座)$', content)
+        if horoscope_match:
             if content in ZODIAC_MAPPING:
                 zodiac_english = ZODIAC_MAPPING[content]
                 content = self.get_horoscope(zodiac_english)
@@ -82,30 +93,49 @@ class Apilot(Plugin):
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
 
-        if content == "微博热搜":
-            content = self.get_weibo_hot_trends()
+        hot_trend_match = re.search(r'(.{1,6})热榜$', content)
+        if hot_trend_match:
+            hot_trends_type = hot_trend_match.group(1).strip()  # 提取匹配的组并去掉可能的空格
+            content = self.get_hot_trends(hot_trends_type)
             reply = self.create_reply(ReplyType.TEXT, content)
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
 
+
         # 天气查询
-        weather_match = re.search(r'([\u4e00-\u9fa5]{1,6})的?天气$', content)
+        weather_match = re.search(r'([\u4e00-\u9fa5]{1,6}|\d{1,10})\s*的?天气$', content)
         if weather_match:
-            # 如果匹配成功，提取第一个捕获组（可能包含“的”的城市名）
-            city_with_optional_de = weather_match.group(1)
-            # 移除可能存在的“的”
-            city = city_with_optional_de.replace('的', '')
+            # 如果匹配成功，提取第一个捕获组
+            content = weather_match.group(1)
             if not self.alapi_token:
                 self.handle_error("alapi_token not configured", "天气请求失败")
                 reply = self.create_reply(ReplyType.TEXT, "请先配置alapi的token")
             else:
-                content = self.get_weather(self.alapi_token, city)
+                content = self.get_weather(self.alapi_token, content)
                 reply = self.create_reply(ReplyType.TEXT, content)
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
 
-    def get_help_text(self, **kwargs):
-        help_text = "\n🐳发送“早报”、“摸鱼”、“微博热搜”、“星座名称”会有惊喜！\n📦快递查询：<快递+快递单号>\n🌦️天气查询：城市+天气"
+    def get_help_text(self, verbose=False, **kwargs):
+        short_help_text = " 发送特定指令以获取早报、查询天气、星座运势、快递信息等！"
+
+        if not verbose:
+            return short_help_text
+
+        help_text = "📚 发送关键词获取特定信息！\n"
+
+        # 娱乐和信息类
+        help_text += "\n🎉 娱乐与资讯：\n"
+        help_text += "  🌅 早报: 发送“早报”获取早报。\n"
+        help_text += "  🐟 摸鱼: 发送“摸鱼”获取摸鱼人日历。\n"
+        help_text += "  🔥 热榜: 发送“xx热榜”查看支持的热榜。\n"
+
+        # 查询类
+        help_text += "\n🔍 查询工具：\n"
+        help_text += "  🌦️ 天气: 发送“城市+天气”查天气，如“北京天气”。\n"
+        help_text += "  📦 快递: 发送“快递+单号”查询快递状态。如“快递112345655”\n"
+        help_text += "  🌌 星座: 发送星座名称查看今日运势，如“白羊座”。\n"
+
         return help_text
 
 
@@ -150,7 +180,6 @@ class Apilot(Plugin):
         except Exception as e:
             return self.handle_error(e, "获取摸鱼日历信息失败")
 
-
     def get_horoscope(self, astro_sign: str, time_period: str = "today"):
         url = BASE_URL_VVHAN + "horoscope"
         params = {
@@ -191,24 +220,33 @@ class Apilot(Plugin):
         except Exception as e:
             return self.handle_error(e, "获取星座信息失败")
 
-
-    def get_weibo_hot_trends(self):
-        url = BASE_URL_VVHAN + "wbhot"
-        try:
-            data = self.make_request(url, "GET")
-            if isinstance(data, dict) and data['success'] == True:
-                output = []
-                topics = data['data']
-                output.append(f'更新时间：{data["time"]}\n')
-                for i, topic in enumerate(topics[:15], 1):
-                    formatted_str = f"{i}. {topic['title']} ({topic['hot']} 浏览)\nURL: {topic['url']}\n"
-                    output.append(formatted_str)
-                return "\n".join(output)
-            else:
-                return self.handle_error(data, "热榜获取失败")
-        except Exception as e:
-            return self.handle_error(e, "获取热搜失败")
-
+    def get_hot_trends(self, hot_trends_type):
+        # 查找映射字典以获取API参数
+        hot_trends_type_en = hot_trend_types.get(hot_trends_type, None)
+        if hot_trends_type_en is not None:
+            url = BASE_URL_VVHAN + "hotlist?type=" + hot_trends_type_en
+            try:
+                data = self.make_request(url, "GET")
+                if isinstance(data, dict) and data['success'] == True:
+                    output = []
+                    topics = data['data']
+                    output.append(f'更新时间：{data["update_time"]}\n')
+                    for i, topic in enumerate(topics[:15], 1):
+                        hot = topic.get('hot', '无热度参数, 0')
+                        formatted_str = f"{i}. {topic['title']} ({hot} 浏览)\nURL: {topic['url']}\n"
+                        output.append(formatted_str)
+                    return "\n".join(output)
+                else:
+                    return self.handle_error(data, "热榜获取失败")
+            except Exception as e:
+                return self.handle_error(e, "获取热榜失败")
+        else:
+            supported_types = "/".join(hot_trend_types.keys())
+            final_output = (
+                f"👉 已支持的类型有：\n\n    {supported_types}\n"
+                f"\n📝 请按照以下格式发送：\n    类型+热榜  例如：微博热榜"
+            )
+            return final_output
 
     def query_express_info(self, alapi_token, tracking_number, com="", order="asc"):
         url = BASE_URL_ALAPI + "kd"
@@ -238,12 +276,28 @@ class Apilot(Plugin):
         except Exception as e:
             return self.handle_error(e, "快递查询失败")
 
-    def get_weather(self, alapi_token, city: str):
+    def get_weather(self, alapi_token, city_or_id: str):
         url = BASE_URL_ALAPI + 'tianqi'
-        params = {
-            'city': city,
-            'token': f'{alapi_token}'  # 请将你的token填在这里
-        }
+        # 判断使用id还是city请求api
+        if city_or_id.isnumeric():  # 判断是否为纯数字，也即是否为 city_id
+            params = {
+                'city_id': city_or_id,
+                'token': f'{alapi_token}'
+            }
+        else:
+            city_info = self.check_multiple_city_ids(city_or_id)
+            if city_info:
+                data = city_info['data']
+                formatted_city_info = "\n".join(
+                    [f"{idx + 1}) {entry['province']}--{entry['leader']}, ID: {entry['city_id']}"
+                     for idx, entry in enumerate(data)]
+                )
+                return f"查询 <{city_or_id}> 具有多条数据：\n{formatted_city_info}\n请使用id查询，发送“id天气”"
+
+            params = {
+                'city': city_or_id,
+                'token': f'{alapi_token}'
+            }
         try:
             weather_data = self.make_request(url, "GET", params=params)
             if isinstance(weather_data, dict) and weather_data.get('code') == 200:
@@ -330,7 +384,6 @@ class Apilot(Plugin):
         reply.content = content
         return reply
 
-
     def handle_error(self, error, message):
         logger.error(f"{message}，错误信息：{error}")
         return message
@@ -341,6 +394,25 @@ class Apilot(Plugin):
             return all([result.scheme, result.netloc])
         except ValueError:
             return False
+
+    def load_city_conditions(self):
+        if self.condition_2_and_3_cities is None:
+            try:
+                json_file_path = os.path.join(os.path.dirname(__file__), 'duplicate-citys.json')
+                with open(json_file_path, 'r', encoding='utf-8') as f:
+                    self.condition_2_and_3_cities = json.load(f)
+            except Exception as e:
+                return self.handle_error(e, "加载condition_2_and_3_cities.json失败")
+
+
+    def check_multiple_city_ids(self, city):
+        self.load_city_conditions()
+        city_info = self.condition_2_and_3_cities.get(city, None)
+        if city_info:
+            return city_info
+        return None
+
+
 ZODIAC_MAPPING = {
         '白羊座': 'aries',
         '金牛座': 'taurus',
@@ -355,3 +427,16 @@ ZODIAC_MAPPING = {
         '水瓶座': 'aquarius',
         '双鱼座': 'pisces'
     }
+
+hot_trend_types = {
+    "微博": "wbHot",
+    "虎扑": "huPu",
+    "知乎": "zhihuHot",
+    "哔哩哔哩": "bili",
+    "36氪": "36Ke",
+    "抖音": "douyinHot",
+    "少数派": "ssPai",
+    "IT最新": "itNews",
+    "IT科技": "itInfo"
+
+}
