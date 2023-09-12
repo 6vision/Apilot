@@ -243,9 +243,8 @@ class Apilot(Plugin):
         else:
             supported_types = "/".join(hot_trend_types.keys())
             final_output = (
-                f"⚠️未知的热榜类型 ⚠️\n"
-                f"👉 已支持的类型有：\n  {supported_types}\n"
-                f"📝 请按照以下格式发送：\n  类型+热榜  例如：微博热榜"
+                f"👉 已支持的类型有：\n\n    {supported_types}\n"
+                f"\n📝 请按照以下格式发送：\n    类型+热榜  例如：微博热榜"
             )
             return final_output
 
