@@ -20,7 +20,6 @@
 ### 使用
 * 对话框发送“早报”、“摸鱼”、"微博热搜（已更新为"微博热榜）"、”任意星座名称”可以直接返回对应的内容！
 
-  
 
 <img src="img/早报.png" width="600" >
 
@@ -34,17 +33,16 @@
 
 * 快递查询格式：快递+快递编号。如：快递YT2505082504474，如下图!
 
-  
 
-<img src="img/快递.png" width="600" >
+<img src="img/快递.png" width="600" style="display: block; margin: auto;" />
 
 
 
 * 天气查询格式：城市+天气。如：成都天气。（支持3400+城市天气，输入不正确或者查询失败返回北京天气）
 
-<img src="img/天气.png" width="600" >
+<img src="img/天气.png" width="600" style="display: block; margin: auto;" />		
 
 * 热榜查询。支持:<微博/虎扑/知乎/哔哩哔哩/36氪/抖音/少数派/IT最新/IT科技>
 
-  <img src="img/热榜.png" width="600" >
+<img src="img/热榜.png" width="600" >
 
