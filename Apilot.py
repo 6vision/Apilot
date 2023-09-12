@@ -122,7 +122,7 @@ class Apilot(Plugin):
         if not verbose:
             return short_help_text
 
-        help_text = "📚 主要功能：\n"
+        help_text = "📚 发送关键词获取特定信息！\n"
 
         # 娱乐和信息类
         help_text += "\n🎉 娱乐与资讯：\n"
