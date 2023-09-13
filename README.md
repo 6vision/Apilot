@@ -15,11 +15,18 @@
 ### 配置
 直接安装不配置也可以使用一部分接口，部分接口(快递、天气)需要配置alapi的token。
 
-复制插件目录的`config.json.template`文件并重命名为`config.json`，在`alapi_token`字段填入申请的token，token申请点击这里[alapi](https://admin.alapi.cn/account/center)
+* 服务器部署：复制插件目录的`config.json.template`文件并重命名为`config.json`，在`alapi_token`字段填入申请的token，
+
+* docker部署：参考项目docker部署的[插件使用](https://github.com/zhayujie/chatgpt-on-wechat#3-%E6%8F%92%E4%BB%B6%E4%BD%BF%E7%94%A8)，在挂载的config.json配置文件内增加`apilot`插件的配置参数，如下图，每次重启项目，需要使用 `#installp` 指令重新安装
+
+  <img src="img/docker参数.png" width="300" >
+
+### Token申请
+
+* `alapi_token`申请点击这里[alapi](https://admin.alapi.cn/account/center)
 
 ### 使用
 * 对话框发送“早报”、“摸鱼”、"微博热搜（已更新为"微博热榜）"、”任意星座名称”可以直接返回对应的内容！
-
 
 <img src="img/早报.png" width="600" >
 
