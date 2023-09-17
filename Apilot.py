@@ -176,7 +176,7 @@ class Apilot(Plugin):
             if isinstance(moyu_calendar_info, dict) and moyu_calendar_info['success']:
                 return moyu_calendar_info['url']
             else:
-                return self.handle_error(moyu_calendar_info,"moyu_calendar请求失败")
+                return self.handle_error(moyu_calendar_info, "moyu_calendar请求失败")
         except Exception as e:
             return self.handle_error(e, "获取摸鱼日历信息失败")
 
@@ -215,7 +215,7 @@ class Apilot(Plugin):
                 return result
 
             else:
-                return self.handle_error("horoscope_data", "Failed to fetch horoscope data.")
+                return self.handle_error(horoscope_data, "Failed to fetch horoscope data.")
 
         except Exception as e:
             return self.handle_error(e, "获取星座信息失败")
@@ -256,11 +256,14 @@ class Apilot(Plugin):
         try:
             response_json = self.make_request(url, method="POST", headers=headers, data=payload)
 
-            if not isinstance(response_json, dict) and response_json.get("code") != 200:
-                return f"查询失败：{response_json.get('msg')}"
-            data = response_json.get("data")
-            if not data.get("info"):
-                return "抱歉：没有查询到快递信息。"
+            if not isinstance(response_json, dict) or response_json is None:
+                return f"查询失败：api响应为空"
+            code = response_json.get("code", None)
+            if code != 200:
+                msg = response_json.get("msg", "未知错误")
+                self.handle_error(msg, f"错误码{code}")
+                return f"查询失败，{msg}"
+            data = response_json.get("data", None)
             formatted_result = [
                 f"快递编号：{data.get('nu')}",
                 f"快递公司：{data.get('com')}",
@@ -359,7 +362,7 @@ class Apilot(Plugin):
 
                 return "\n".join(formatted_output)
             else:
-                return self.handle_error("weather_data", "获取失败，请查看服务器log")
+                return self.handle_error(weather_data, "获取失败，请查看服务器log")
 
         except Exception as e:
             return self.handle_error(e, "获取天气信息失败")
