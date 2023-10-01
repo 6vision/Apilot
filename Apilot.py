@@ -14,7 +14,7 @@ BASE_URL_ALAPI = "https://v2.alapi.cn/api/"
 
 @plugins.register(
     name="Apilot",
-    desire_priority=-1,
+    desire_priority=88,
     hidden=False,
     desc="A plugin to handle specific keywords",
     version="0.2",
