@@ -153,7 +153,7 @@ class Apilot(Plugin):
                         news_list = ["{}. {}".format(idx, news) for idx, news in enumerate(morning_news_info["data"][:-1], 1)]
                         formatted_news = "\n".join(news_list)
                         weiyu = morning_news_info["data"][-1].strip()
-                        return f"\n{formatted_news}\n\n{weiyu}\n\n 图片url：{morning_news_info['imgUrl']}"
+                        return f"{formatted_news}\n\n{weiyu}\n\n 图片url：{morning_news_info['imgUrl']}"
                     else:
                         return morning_news_info['imgUrl']
                 else:
@@ -175,7 +175,7 @@ class Apilot(Plugin):
                         # 整理新闻为有序列表
                         formatted_news = "\n".join(news_list)
                         # 组合新闻和微语
-                        return f"\n{formatted_news}\n\n{weiyu}\n\n 图片url：{img_url}"
+                        return f"{formatted_news}\n\n{weiyu}\n\n 图片url：{img_url}"
                     else:
                         return img_url
                 else:
