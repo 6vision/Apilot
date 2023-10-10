@@ -1,3 +1,4 @@
 {
-  "alapi_token": "xxx"
+  "alapi_token": "xxx",
+  "morning_news_text_enabled": false
 }

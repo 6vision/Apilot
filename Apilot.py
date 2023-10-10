@@ -29,9 +29,11 @@ class Apilot(Plugin):
             if not self.conf:
                 logger.warn("[Apilot] inited but alapi_token not found in config")
                 self.alapi_token = None # Setting a default value for alapi_token
+                self.morning_news_text_enabled = False
             else:
                 logger.info("[Apilot] inited and alapi_token loaded successfully")
                 self.alapi_token = self.conf["alapi_token"]
+                self.morning_news_text_enabled = self.conf["morning_news_text_enabled"]
             self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
         except Exception as e:
             raise self.handle_error(e, "[Apiot] init failed, ignore ")
@@ -45,7 +47,7 @@ class Apilot(Plugin):
         logger.debug("[Apilot] on_handle_context. content: %s" % content)
 
         if content == "早报":
-            news = self.get_morning_news(self.alapi_token)
+            news = self.get_morning_news(self.alapi_token, self.morning_news_text_enabled)
             reply_type = ReplyType.IMAGE_URL if self.is_valid_url(news) else ReplyType.TEXT
             reply = self.create_reply(reply_type, news or "早报服务异常，请检查配置或者查看服务器log")
             e_context["reply"] = reply
@@ -138,8 +140,7 @@ class Apilot(Plugin):
 
         return help_text
 
-
-    def get_morning_news(self, alapi_token):
+    def get_morning_news(self, alapi_token, morning_news_text_enabled):
         if not alapi_token:
             url = BASE_URL_VVHAN + "60s?type=json"
             payload = "format=json"
@@ -147,7 +148,14 @@ class Apilot(Plugin):
             try:
                 morning_news_info = self.make_request(url, method="POST", headers=headers, data=payload)
                 if isinstance(morning_news_info, dict) and morning_news_info['success']:
-                    return morning_news_info['imgUrl']
+                    if morning_news_text_enabled:
+                        # 提取并格式化新闻
+                        news_list = ["{}. {}".format(idx, news) for idx, news in enumerate(morning_news_info["data"][:-1], 1)]
+                        formatted_news = "\n".join(news_list)
+                        weiyu = morning_news_info["data"][-1].strip()
+                        return f"\n{formatted_news}\n\n{weiyu}\n\n 图片url：{morning_news_info['imgUrl']}"
+                    else:
+                        return morning_news_info['imgUrl']
                 else:
                     return self.handle_error(morning_news_info, "get_morning_news失败")
             except Exception as e:
@@ -159,7 +167,17 @@ class Apilot(Plugin):
             try:
                 morning_news_info = self.make_request(url, method="POST", headers=headers, data=payload)
                 if isinstance(morning_news_info, dict) and morning_news_info.get('code') == 200:
-                    return morning_news_info['data']['image']
+                    img_url = morning_news_info['data']['image']
+                    if morning_news_text_enabled:
+                        news_list = morning_news_info['data']['news']
+                        weiyu = morning_news_info['data']['weiyu']
+
+                        # 整理新闻为有序列表
+                        formatted_news = "\n".join(news_list)
+                        # 组合新闻和微语
+                        return f"\n{formatted_news}\n\n{weiyu}\n\n 图片url：{img_url}"
+                    else:
+                        return img_url
                 else:
                     return self.handle_error(morning_news_info, "get_morning_news失败")
             except Exception as e:
