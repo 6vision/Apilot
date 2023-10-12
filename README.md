@@ -15,7 +15,11 @@
 ### 配置
 直接安装不配置也可以使用一部分接口，部分接口(快递、天气)需要配置alapi的token。
 
-* 服务器部署：复制插件目录的`config.json.template`文件并重命名为`config.json`，在`alapi_token`字段填入申请的token，
+* 服务器部署：复制插件目录的`config.json.template`文件并重命名为`config.json`，
+
+  * `alapi_token`：填入申请的alapi token。
+
+  * `morning_news_text_enabled`：默认false，发送早报图片；true，发送文字版早报。
 
 * docker部署：参考项目docker部署的[插件使用](https://github.com/zhayujie/chatgpt-on-wechat#3-%E6%8F%92%E4%BB%B6%E4%BD%BF%E7%94%A8)，在挂载的config.json配置文件内增加`apilot`插件的配置参数，如下图，每次重启项目，需要使用 `#installp` 指令重新安装
 
