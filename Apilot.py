@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 BASE_URL_VVHAN = "https://api.vvhan.com/api/"
 BASE_URL_ALAPI = "https://v2.alapi.cn/api/"
 
+
 @plugins.register(
     name="Apilot",
     desire_priority=88,
@@ -151,7 +152,8 @@ class Apilot(Plugin):
                     if morning_news_text_enabled:
                         # 提取并格式化新闻
                         news_list = ["{}. {}".format(idx, news) for idx, news in enumerate(morning_news_info["data"][:-1], 1)]
-                        formatted_news = "\n".join(news_list)
+                        formatted_news = f"☕ {morning_news_info['data']['date']}  今日早报\n"
+                        formatted_news = formatted_news + "\n".join(news_list)
                         weiyu = morning_news_info["data"][-1].strip()
                         return f"{formatted_news}\n\n{weiyu}\n\n 图片url：{morning_news_info['imgUrl']}"
                     else:
@@ -173,7 +175,8 @@ class Apilot(Plugin):
                         weiyu = morning_news_info['data']['weiyu']
 
                         # 整理新闻为有序列表
-                        formatted_news = "\n".join(news_list)
+                        formatted_news = f"☕ {morning_news_info['data']['date']}  今日早报\n"
+                        formatted_news = formatted_news + "\n".join(news_list)
                         # 组合新闻和微语
                         return f"{formatted_news}\n\n{weiyu}\n\n 图片url：{img_url}"
                     else:
