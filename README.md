@@ -1,4 +1,6 @@
 ## 一个基于[ChatGPT-on-Wechat](https://github.com/zhayujie/chatgpt-on-wechat)项目的简单插件，直接调用一些实用的api接口！
+* [ALAPI接口](https://admin.alapi.cn/account/center)，部分接口免费，该插件没有兼容付费接口，比如热榜。
+* [韩小韩API接口站](https://api.vvhan.com/)，都是免费接口，但站长最近屏蔽了海外ip，出现问题的可以使用国内服务器，或者自行修改插件代码将接口换为alapi！
 
 ### 安装
 
