@@ -37,7 +37,7 @@ class Apilot(Plugin):
                 try:
                     self.morning_news_text_enabled = self.conf["morning_news_text_enabled"]
                 except:
-                    pass
+                    self.morning_news_text_enabled = False
             self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
         except Exception as e:
             raise self.handle_error(e, "[Apiot] init failed, ignore ")
