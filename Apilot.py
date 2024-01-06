@@ -34,6 +34,7 @@ class Apilot(Plugin):
             else:
                 logger.info("[Apilot] inited and alapi_token loaded successfully")
                 self.alapi_token = self.conf["alapi_token"]
+                
                 try:
                     self.morning_news_text_enabled = self.conf["morning_news_text_enabled"]
                 except:
