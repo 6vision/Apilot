@@ -34,7 +34,10 @@ class Apilot(Plugin):
             else:
                 logger.info("[Apilot] inited and alapi_token loaded successfully")
                 self.alapi_token = self.conf["alapi_token"]
-                self.morning_news_text_enabled = self.conf["morning_news_text_enabled"]
+                try:
+                    self.morning_news_text_enabled = self.conf["morning_news_text_enabled"]
+                except:
+                    pass
             self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
         except Exception as e:
             raise self.handle_error(e, "[Apiot] init failed, ignore ")
