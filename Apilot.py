@@ -50,15 +50,25 @@ class Apilot(Plugin):
         if content == "早报":
             news = self.get_morning_news(self.alapi_token, self.morning_news_text_enabled)
             reply_type = ReplyType.IMAGE_URL if self.is_valid_url(news) else ReplyType.TEXT
-            reply = self.create_reply(reply_type, news or "早报服务异常，请检查配置或者查看服务器log")
+            reply = self.create_reply(reply_type, news)
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
+            return
         if content == "摸鱼":
             moyu = self.get_moyu_calendar()
             reply_type = ReplyType.IMAGE_URL if self.is_valid_url(moyu) else ReplyType.TEXT
-            reply = self.create_reply(reply_type, moyu or "早报服务异常，请检查配置或者查看服务器log")
+            reply = self.create_reply(reply_type, moyu)
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
+            return
+
+        if content == "八卦":
+            bagua = self.get_mx_bagua()
+            reply_type = ReplyType.IMAGE_URL if self.is_valid_url(bagua) else ReplyType.TEXT
+            reply = self.create_reply(reply_type, bagua)
+            e_context["reply"] = reply
+            e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
+            return
 
         if content.startswith("快递"):
             # Extract the part after "快递"
@@ -84,17 +94,19 @@ class Apilot(Plugin):
                 reply = self.create_reply(ReplyType.TEXT, content)
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
+            return
 
         horoscope_match = re.match(r'^([\u4e00-\u9fa5]{2}座)$', content)
         if horoscope_match:
             if content in ZODIAC_MAPPING:
                 zodiac_english = ZODIAC_MAPPING[content]
-                content = self.get_horoscope(zodiac_english)
+                content = self.get_horoscope(self.alapi_token, zodiac_english)
                 reply = self.create_reply(ReplyType.TEXT, content)
             else:
                 reply = self.create_reply(ReplyType.TEXT, "请重新输入星座名称")
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
+            return
 
         hot_trend_match = re.search(r'(.{1,6})热榜$', content)
         if hot_trend_match:
@@ -103,6 +115,7 @@ class Apilot(Plugin):
             reply = self.create_reply(ReplyType.TEXT, content)
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
+            return
 
 
         # 天气查询
@@ -118,9 +131,10 @@ class Apilot(Plugin):
                 reply = self.create_reply(ReplyType.TEXT, content)
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
+            return
 
     def get_help_text(self, verbose=False, **kwargs):
-        short_help_text = " 发送特定指令以获取早报、查询天气、星座运势、快递信息等！"
+        short_help_text = " 发送特定指令以获取早报、热榜、查询天气、星座运势、快递信息等！"
 
         if not verbose:
             return short_help_text
@@ -132,6 +146,7 @@ class Apilot(Plugin):
         help_text += "  🌅 早报: 发送“早报”获取早报。\n"
         help_text += "  🐟 摸鱼: 发送“摸鱼”获取摸鱼人日历。\n"
         help_text += "  🔥 热榜: 发送“xx热榜”查看支持的热榜。\n"
+        help_text += "  🔥 八卦: 发送“八卦”获取明星八卦。\n"
 
         # 查询类
         help_text += "\n🔍 查询工具：\n"
@@ -159,15 +174,18 @@ class Apilot(Plugin):
                     else:
                         return morning_news_info['imgUrl']
                 else:
-                    return self.handle_error(morning_news_info, "get_morning_news失败")
+                    return self.handle_error(morning_news_info, '早报信息获取失败，可配置"alapi token"切换至 Alapi 服务，或者稍后再试')
             except Exception as e:
-                return self.handle_error(e, "早报获取失败")
+                return self.handle_error(e, "出错啦，稍后再试")
         else:
             url = BASE_URL_ALAPI + "zaobao"
-            payload = f"token={alapi_token}&format=json"
+            data = {
+                "token": alapi_token,
+                "format": "json"
+            }
             headers = {'Content-Type': "application/x-www-form-urlencoded"}
             try:
-                morning_news_info = self.make_request(url, method="POST", headers=headers, data=payload)
+                morning_news_info = self.make_request(url, method="POST", headers=headers, data=data)
                 if isinstance(morning_news_info, dict) and morning_news_info.get('code') == 200:
                     img_url = morning_news_info['data']['image']
                     if morning_news_text_enabled:
@@ -182,7 +200,7 @@ class Apilot(Plugin):
                     else:
                         return img_url
                 else:
-                    return self.handle_error(morning_news_info, "get_morning_news失败")
+                    return self.handle_error(morning_news_info, "早报获取失败，请检查 token 是否有误")
             except Exception as e:
                 return self.handle_error(e, "早报获取失败")
 
@@ -190,56 +208,99 @@ class Apilot(Plugin):
         url = BASE_URL_VVHAN + "moyu?type=json"
         payload = "format=json"
         headers = {'Content-Type': "application/x-www-form-urlencoded"}
-
-        try:
+        moyu_calendar_info = self.make_request(url, method="POST", headers=headers, data=payload)
+        # 验证请求是否成功
+        if isinstance(moyu_calendar_info, dict) and moyu_calendar_info['success']:
+            return moyu_calendar_info['url']
+        else:
+            url = "https://dayu.qqsuu.cn/moyuribao/apis.php?type=json"
+            payload = "format=json"
+            headers = {'Content-Type': "application/x-www-form-urlencoded"}
             moyu_calendar_info = self.make_request(url, method="POST", headers=headers, data=payload)
-            # 验证请求是否成功
-            if isinstance(moyu_calendar_info, dict) and moyu_calendar_info['success']:
-                return moyu_calendar_info['url']
+            if isinstance(moyu_calendar_info, dict) and moyu_calendar_info['code'] == 200:
+                moyu_pic_url = moyu_calendar_info['data']
+                if self.is_valid_image_url(moyu_pic_url):
+                    return moyu_pic_url
+                else:
+                    return "周末无需摸鱼，愉快玩耍吧"
             else:
-                return self.handle_error(moyu_calendar_info, "moyu_calendar请求失败")
-        except Exception as e:
-            return self.handle_error(e, "获取摸鱼日历信息失败")
+                return "暂无可用“摸鱼”服务，认真上班"
 
-    def get_horoscope(self, astro_sign: str, time_period: str = "today"):
-        url = BASE_URL_VVHAN + "horoscope"
-        params = {
-            'type': astro_sign,
-            'time': time_period
-        }
-        try:
-            horoscope_data = self.make_request(url, "GET", params=params)
-            if isinstance(horoscope_data, dict) and horoscope_data['success']:
-                data = horoscope_data['data']
+    def get_horoscope(self, alapi_token, astro_sign: str, time_period: str = "today"):
+        if not alapi_token:
+            url = BASE_URL_VVHAN + "horoscope"
+            params = {
+                'type': astro_sign,
+                'time': time_period
+            }
+            try:
+                horoscope_data = self.make_request(url, "GET", params=params)
+                if isinstance(horoscope_data, dict) and horoscope_data['success']:
+                    data = horoscope_data['data']
 
-                result = (
-                    f"{data['title']} ({data['time']}):\n\n"
-                    f"💡【每日建议】\n宜：{data['todo']['yi']}\n忌：{data['todo']['ji']}\n\n"
-                    f"📊【运势指数】\n"
-                    f"总运势：{data['index']['all']}\n"
-                    f"爱情：{data['index']['love']}\n"
-                    f"工作：{data['index']['work']}\n"
-                    f"财运：{data['index']['money']}\n"
-                    f"健康：{data['index']['health']}\n\n"
-                    f"🍀【幸运提示】\n数字：{data['luckynumber']}\n"
-                    f"颜色：{data['luckycolor']}\n"
-                    f"星座：{data['luckyconstellation']}\n\n"
-                    f"✍【简评】\n{data['shortcomment']}\n\n"
-                    f"📜【详细运势】\n"
-                    f"总运：{data['fortunetext']['all']}\n"
-                    f"爱情：{data['fortunetext']['love']}\n"
-                    f"工作：{data['fortunetext']['work']}\n"
-                    f"财运：{data['fortunetext']['money']}\n"
-                    f"健康：{data['fortunetext']['health']}\n"
-                )
+                    result = (
+                        f"{data['title']} ({data['time']}):\n\n"
+                        f"💡【每日建议】\n宜：{data['todo']['yi']}\n忌：{data['todo']['ji']}\n\n"
+                        f"📊【运势指数】\n"
+                        f"总运势：{data['index']['all']}\n"
+                        f"爱情：{data['index']['love']}\n"
+                        f"工作：{data['index']['work']}\n"
+                        f"财运：{data['index']['money']}\n"
+                        f"健康：{data['index']['health']}\n\n"
+                        f"🍀【幸运提示】\n数字：{data['luckynumber']}\n"
+                        f"颜色：{data['luckycolor']}\n"
+                        f"星座：{data['luckyconstellation']}\n\n"
+                        f"✍【简评】\n{data['shortcomment']}\n\n"
+                        f"📜【详细运势】\n"
+                        f"总运：{data['fortunetext']['all']}\n"
+                        f"爱情：{data['fortunetext']['love']}\n"
+                        f"工作：{data['fortunetext']['work']}\n"
+                        f"财运：{data['fortunetext']['money']}\n"
+                        f"健康：{data['fortunetext']['health']}\n"
+                    )
 
-                return result
+                    return result
 
-            else:
-                return self.handle_error(horoscope_data, "Failed to fetch horoscope data.")
+                else:
+                    return self.handle_error(horoscope_data, '星座信息获取失败，可配置"alapi token"切换至 Alapi 服务，或者稍后再试')
 
-        except Exception as e:
-            return self.handle_error(e, "获取星座信息失败")
+            except Exception as e:
+                return self.handle_error(e, "出错啦，稍后再试")
+        else:
+            # 使用 ALAPI 的 URL 和提供的 token
+            url = BASE_URL_ALAPI + "star"
+            payload = f"token={alapi_token}&star={astro_sign}"
+            headers = {'Content-Type': "application/x-www-form-urlencoded"}
+            try:
+                horoscope_data = self.make_request(url, method="POST", headers=headers, data=payload)
+                if isinstance(horoscope_data, dict) and horoscope_data.get('code') == 200:
+                    data = horoscope_data['data']['day']
+
+                    # 格式化并返回 ALAPI 提供的星座信息
+                    result = (
+                        f"📅 日期：{data['date']}\n\n"
+                        f"💡【每日建议】\n宜：{data['yi']}\n忌：{data['ji']}\n\n"
+                        f"📊【运势指数】\n"
+                        f"总运势：{data['all']}\n"
+                        f"爱情：{data['love']}\n"
+                        f"工作：{data['work']}\n"
+                        f"财运：{data['money']}\n"
+                        f"健康：{data['health']}\n\n"
+                        f"🔔【提醒】：{data['notice']}\n\n"
+                        f"🍀【幸运提示】\n数字：{data['lucky_number']}\n"
+                        f"颜色：{data['lucky_color']}\n"
+                        f"星座：{data['lucky_star']}\n\n"
+                        f"✍【简评】\n总运：{data['all_text']}\n"
+                        f"爱情：{data['love_text']}\n"
+                        f"工作：{data['work_text']}\n"
+                        f"财运：{data['money_text']}\n"
+                        f"健康：{data['health_text']}\n"
+                    )
+                    return result
+                else:
+                    return self.handle_error(horoscope_data, "星座获取信息获取失败，请检查 token 是否有误")
+            except Exception as e:
+                return self.handle_error(e, "出错啦，稍后再试")
 
     def get_hot_trends(self, hot_trends_type):
         # 查找映射字典以获取API参数
@@ -258,9 +319,9 @@ class Apilot(Plugin):
                         output.append(formatted_str)
                     return "\n".join(output)
                 else:
-                    return self.handle_error(data, "热榜获取失败")
+                    return self.handle_error(data, "热榜获取失败，请稍后再试")
             except Exception as e:
-                return self.handle_error(e, "获取热榜失败")
+                return self.handle_error(e, "出错啦，稍后再试")
         else:
             supported_types = "/".join(hot_trend_types.keys())
             final_output = (
@@ -390,6 +451,22 @@ class Apilot(Plugin):
         except Exception as e:
             return self.handle_error(e, "获取天气信息失败")
 
+    def get_mx_bagua(self):
+        url = "https://dayu.qqsuu.cn/mingxingbagua/apis.php?type=json"
+        payload = "format=json"
+        headers = {'Content-Type': "application/x-www-form-urlencoded"}
+        bagua_info = self.make_request(url, method="POST", headers=headers, data=payload)
+        # 验证请求是否成功
+        if isinstance(bagua_info, dict) and bagua_info['code'] == 200:
+            bagua_pic_url = bagua_info["data"]
+            if self.is_valid_image_url(bagua_pic_url):
+                return bagua_pic_url
+            else:
+                return "周末不更新，请微博吃瓜"
+        else:
+            logger.error(f"错误信息：{bagua_info}")
+            return "暂无明星八卦，吃瓜莫急"
+
     def make_request(self, url, method="GET", headers=None, params=None, data=None, json_data=None):
         try:
             if method.upper() == "GET":
@@ -401,7 +478,7 @@ class Apilot(Plugin):
 
             return response.json()
         except Exception as e:
-            return self.handle_error(e, "请求失败")
+            return e
 
 
     def create_reply(self, reply_type, content):
@@ -419,6 +496,15 @@ class Apilot(Plugin):
             result = urlparse(url)
             return all([result.scheme, result.netloc])
         except ValueError:
+            return False
+
+    def is_valid_image_url(self, url):
+        try:
+            response = requests.head(url)  # Using HEAD request to check the URL header
+            # If the response status code is 200, the URL exists and is reachable.
+            return response.status_code == 200
+        except requests.RequestException as e:
+            # If there's an exception such as a timeout, connection error, etc., the URL is not valid.
             return False
 
     def load_city_conditions(self):
