@@ -65,6 +65,14 @@ class Apilot(Plugin):
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
             return
 
+        if content == "摸鱼视频":
+            moyu = self.get_moyu_calendar_video()
+            reply_type = ReplyType.VIDEO_URL if self.is_valid_url(moyu) else ReplyType.TEXT
+            reply = self.create_reply(reply_type, moyu)
+            e_context["reply"] = reply
+            e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
+            return
+
         if content == "八卦":
             bagua = self.get_mx_bagua()
             reply_type = ReplyType.IMAGE_URL if self.is_valid_url(bagua) else ReplyType.TEXT
@@ -228,6 +236,19 @@ class Apilot(Plugin):
                     return "周末无需摸鱼，愉快玩耍吧"
             else:
                 return "暂无可用“摸鱼”服务，认真上班"
+
+    def get_moyu_calendar_video(self):
+        url = "https://dayu.qqsuu.cn/moyuribaoshipin/apis.php?type=json"
+        payload = "format=json"
+        headers = {'Content-Type': "application/x-www-form-urlencoded"}
+        moyu_calendar_info = self.make_request(url, method="POST", headers=headers, data=payload)
+        # 验证请求是否成功
+        if isinstance(moyu_calendar_info, dict) and moyu_calendar_info['code'] == 200:
+            moyu_video_url = moyu_calendar_info['data']
+            if self.is_valid_image_url(moyu_video_url):
+                return moyu_video_url
+        else:
+            return "视频版没了，看看文字版吧"
 
     def get_horoscope(self, alapi_token, astro_sign: str, time_period: str = "today"):
         if not alapi_token:
