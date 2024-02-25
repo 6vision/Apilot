@@ -242,13 +242,15 @@ class Apilot(Plugin):
         payload = "format=json"
         headers = {'Content-Type': "application/x-www-form-urlencoded"}
         moyu_calendar_info = self.make_request(url, method="POST", headers=headers, data=payload)
+        logger.debug(f"[Apilot] moyu calendar video response: {moyu_calendar_info}")
         # 验证请求是否成功
         if isinstance(moyu_calendar_info, dict) and moyu_calendar_info['code'] == 200:
             moyu_video_url = moyu_calendar_info['data']
             if self.is_valid_image_url(moyu_video_url):
                 return moyu_video_url
-        else:
-            return "视频版没了，看看文字版吧"
+
+        # 未成功请求到视频时，返回提示信息
+        return "视频版没了，看看文字版吧"
 
     def get_horoscope(self, alapi_token, astro_sign: str, time_period: str = "today"):
         if not alapi_token:
