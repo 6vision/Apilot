@@ -130,15 +130,16 @@ class Apilot(Plugin):
 
 
         # 天气查询
-        weather_match = re.match(r'^(?:(.{2,7}?)(?:市|县|区|镇)?|(\d{7,9}))(?:的)?天气$', content)
+        weather_match = re.match(r'^(?:(.{2,7}?)(?:市|县|区|镇)?|(\d{7,9}))(:?今天|明天|后天|7天|七天)?(?:的)?天气$', content)
         if weather_match:
             # 如果匹配成功，提取第一个捕获组
             city_or_id = weather_match.group(1) or weather_match.group(2)
+            date = weather_match.group(3)
             if not self.alapi_token:
                 self.handle_error("alapi_token not configured", "天气请求失败")
                 reply = self.create_reply(ReplyType.TEXT, "请先配置alapi的token")
             else:
-                content = self.get_weather(self.alapi_token, city_or_id, content)
+                content = self.get_weather(self.alapi_token, city_or_id, date, content)
                 reply = self.create_reply(ReplyType.TEXT, content)
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
@@ -332,7 +333,9 @@ class Apilot(Plugin):
         if hot_trends_type_en is not None:
             url = BASE_URL_VVHAN + "hotlist?type=" + hot_trends_type_en
             try:
-                data = self.make_request(url, "GET")
+                data = self.make_request(url, "GET", {
+                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                })
                 if isinstance(data, dict) and data['success'] == True:
                     output = []
                     topics = data['data']
@@ -385,8 +388,11 @@ class Apilot(Plugin):
         except Exception as e:
             return self.handle_error(e, "快递查询失败")
 
-    def get_weather(self, alapi_token, city_or_id: str, content):
+    def get_weather(self, alapi_token, city_or_id: str, date: str, content):
         url = BASE_URL_ALAPI + 'tianqi'
+        isFuture = date in ['明天', '后天', '七天', '7天']
+        if isFuture:
+            url = BASE_URL_ALAPI + 'tianqi/seven'
         # 判断使用id还是city请求api
         if city_or_id.isnumeric():  # 判断是否为纯数字，也即是否为 city_id
             params = {
@@ -411,12 +417,31 @@ class Apilot(Plugin):
             weather_data = self.make_request(url, "GET", params=params)
             if isinstance(weather_data, dict) and weather_data.get('code') == 200:
                 data = weather_data['data']
+                if isFuture:
+                    formatted_output = []
+                    for num, d in enumerate(data):
+                        if num == 0:
+                            formatted_output.append(f"🏙️ 城市: {d['city']} ({d['province']})\n")
+                        if date == '明天' and num != 1:
+                            continue
+                        if date == '后天' and num != 2:
+                            continue
+                        basic_info = [
+                            f"🕒 日期: {d['date']}",
+                            f"🌦️ 天气: 🌞{d['wea_day']}| 🌛{d['wea_night']}",
+                            f"🌡️ 温度: 🌞{d['temp_day']}℃| 🌛{d['temp_night']}℃",
+                            f"🌅 日出/日落: {d['sunrise']} / {d['sunset']}",
+                        ]
+                        for i in d['index']:
+                            basic_info.append(f"{i['name']}: {i['level']}")
+                        formatted_output.append("\n".join(basic_info) + '\n')
+                    return "\n".join(formatted_output)
                 update_time = data['update_time']
                 dt_object = datetime.strptime(update_time, "%Y-%m-%d %H:%M:%S")
                 formatted_update_time = dt_object.strftime("%m-%d %H:%M")
                 # Basic Info
                 if not city_or_id.isnumeric() and data['city'] not in content:  # 如果返回城市信息不是所查询的城市，重新输入
-                    return "输入不规范，请输<国内城市+天气>，比如 '成都天气'"
+                    return "输入不规范，请输<国内城市+(今天|明天|后天|七天|7天)+天气>，比如 '广州天气'"
                 formatted_output = []
                 basic_info = (
                     f"🏙️ 城市: {data['city']} ({data['province']})\n"
