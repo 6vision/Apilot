@@ -331,13 +331,14 @@ class Apilot(Plugin):
         # 查找映射字典以获取API参数
         hot_trends_type_en = hot_trend_types.get(hot_trends_type, None)
         if hot_trends_type_en is not None:
-            url = BASE_URL_VVHAN + "hotlist?type=" + hot_trends_type_en
+            url = BASE_URL_VVHAN + "hotlist/" + hot_trends_type_en
             try:
                 data = self.make_request(url, "GET", {
                     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                 })
                 if isinstance(data, dict) and data['success'] == True:
                     output = []
+                    data = data['data']
                     topics = data['data']
                     output.append(f'更新时间：{data["update_time"]}\n')
                     for i, topic in enumerate(topics[:15], 1):
@@ -593,11 +594,14 @@ hot_trend_types = {
     "微博": "wbHot",
     "虎扑": "huPu",
     "知乎": "zhihuHot",
+    "知乎日报": "zhihuDay",
     "哔哩哔哩": "bili",
     "36氪": "36Ke",
     "抖音": "douyinHot",
-    "少数派": "ssPai",
-    "IT最新": "itNews",
-    "IT科技": "itInfo"
-
+    "IT": "itNews",
+    "虎嗅": "huXiu",
+    "产品经理": "woShiPm",
+    "头条": "toutiao",
+    "百度": "baiduRD",
+    "豆瓣": "douban",
 }
