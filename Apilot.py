@@ -338,7 +338,6 @@ class Apilot(Plugin):
                 })
                 if isinstance(data, dict) and data['success'] == True:
                     output = []
-                    data = data['data']
                     topics = data['data']
                     output.append(f'更新时间：{data["update_time"]}\n')
                     for i, topic in enumerate(topics[:15], 1):
