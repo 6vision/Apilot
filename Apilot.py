@@ -81,6 +81,14 @@ class Apilot(Plugin):
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
             return
 
+        if content == "美文":
+            article = self.get_beautiful_article()
+            reply = self.create_reply(ReplyType.TEXT, article)
+            e_context["reply"] = reply
+            e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
+            return
+
+
         if content.startswith("快递"):
             # Extract the part after "快递"
             tracking_number = content[2:].strip()
@@ -252,6 +260,19 @@ class Apilot(Plugin):
 
         # 未成功请求到视频时，返回提示信息
         return "视频版没了，看看文字版吧"
+
+    def get_beautiful_article(self):
+        url = "https://v2.alapi.cn/api/mryw/random"
+        payload = f"token={self.alapi_token}"
+        headers = {'Content-Type': "application/x-www-form-urlencoded"}
+        beautiful_article_info = self.make_request(url, method="POST", headers=headers, data=payload)
+        if isinstance(beautiful_article_info, dict) and beautiful_article_info['code'] == 200:
+            result = beautiful_article_info['data']
+            return result
+        else:
+            return "美文请求配置错误哦！"
+
+
 
     def get_horoscope(self, alapi_token, astro_sign: str, time_period: str = "today"):
         if not alapi_token:
